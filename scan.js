@@ -1,5 +1,8 @@
 var rfb = require('rfb2');
 
+var Canvas = require('canvas');
+var Image = Canvas.Image;
+
 var PNG = require('pngjs').PNG;
 
 var readline = require('readline');
@@ -55,7 +58,9 @@ var scanner = {
 			var writers = 0;
 
 			var title;
-			var png;
+
+			var canvas;
+			var ctx;
 
 			var r = rfb.createConnection({
 				host: ip,
@@ -68,28 +73,34 @@ var scanner = {
 
 				resolve({ip: ip, title: title});
 
-				png = new PNG({width: r.width, height: r.height, colorType: 2, bgColor: {red: 0, green: 0, blue: 0}});
+				canvas = canvas = new Canvas(r.width, r.height);
+				ctx = canvas.getContext('2d');
+
 				r.requestUpdate(false, 0, 0, r.width, r.height);
 			});
 
 			r.on('rect', function(rect) {
-				writers++;
-				console.log(ip, rect);
+				png = new PNG({width: rect.width, height: rect.height});
+				
+				png.data = rect.data;
 
-				var max = 0;
+				var stream = png.pack();
 
-				for(var y = 0; y < rect.height * 4; y++){
-					for(var x = 0; x < rect.width; x++){
-						png.data[(rect.y + y) * png.width + (rect.x + x)] = rect.data[y * rect.width + x];
-						max = (rect.y + y) * png.width + (rect.x + x);
-					}
-				}
+				var bufs = [];
+				stream.on('data', function(d){ bufs.push(d); });
+				stream.on('end', function(){
+					var buf = Buffer.concat(bufs);
 
-				writers--;
+					image = new Image;
+					image.src = buf;
 
-				if(writers == 0){
-					png.pack().pipe(fs.createWriteStream('./images/'+ip+'.png'))
-				}
+					ctx.drawImage(image, rect.x, rect.y, image.width, image.height);
+
+					stream = canvas.pngStream();
+					out = fs.createWriteStream('./images/'+ip+'.png');
+
+					stream.pipe(out);
+				});
 			});
 
 			r.on('error', function(error) {

@@ -9,7 +9,7 @@
   "author": "Nemanja Nedeljković <nemanjan00@gmail.com> (https://nemanja.top/)",
   "license": "ISC",
   "dependencies": {
-    "node-png": "^0.4.3",
+    "canvas": "^1.4.0",
     "pngjs": "^2.3.1",
     "rfb2": "0.0.11"
   }
