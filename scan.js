@@ -1,5 +1,7 @@
 var rfb = require('rfb2');
 
+var PNG = require('pngjs').PNG;
+
 var readline = require('readline');
 var fs = require('fs');
 
@@ -15,10 +17,8 @@ var scanner = {
 	threadCounter: 0,
 
 	next: function(){
-		if(scanner.ipList.length == 0){
-			setTimeout(function(){
-				process.exit(0);
-			}, config.timeOut);
+		if(scanner.ipList.length == 0 && scanner.threadCounter == 0){
+			console.log("Done. Maybe waiting for screenshots... ");
 		}
 
 		if(scanner.ipList.length > 0 && scanner.threadCounter < scanner.threadMax){
@@ -52,6 +52,11 @@ var scanner = {
 		var p = new Promise(function(resolve, reject) {
 			scanner.threadInc();
 
+			var writers = 0;
+
+			var title;
+			var png;
+
 			var r = rfb.createConnection({
 				host: ip,
 				port: 5900,
@@ -59,14 +64,35 @@ var scanner = {
 			});
 
 			r.on('connect', function() {
-				var title = r.title;
+				title = r.title;
 
-				r.end();
 				resolve({ip: ip, title: title});
+
+				png = new PNG({width: r.width, height: r.height, colorType: 2, bgColor: {red: 0, green: 0, blue: 0}});
+				r.requestUpdate(false, 0, 0, r.width, r.height);
+			});
+
+			r.on('rect', function(rect) {
+				writers++;
+				console.log(ip, rect);
+
+				var max = 0;
+
+				for(var y = 0; y < rect.height * 4; y++){
+					for(var x = 0; x < rect.width; x++){
+						png.data[(rect.y + y) * png.width + (rect.x + x)] = rect.data[y * rect.width + x];
+						max = (rect.y + y) * png.width + (rect.x + x);
+					}
+				}
+
+				writers--;
+
+				if(writers == 0){
+					png.pack().pipe(fs.createWriteStream('./images/'+ip+'.png'))
+				}
 			});
 
 			r.on('error', function(error) {
-				r.end();
 				reject(error);
 			});
 		});
@@ -78,7 +104,6 @@ var scanner = {
 		});
 
 		setTimeout(function(){
-			r.end();
 			scanner.reject();
 		}, config.timeOut);
 	},
@@ -95,6 +120,7 @@ var scanner = {
 scanner.start();
 
 process.on('uncaughtException', function (exception) {
+	console.log(exception);
 	scanner.reject();
 });
 
