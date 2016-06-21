@@ -3,17 +3,22 @@ var rfb = require('rfb2');
 var readline = require('readline');
 var fs = require('fs');
 
+var config = {
+	maxThreads: 50,
+	timeOut: 5000
+};
+
 var scanner = {
 	ipList: [],
 
-	threadMax: 50,
+	threadMax: config.maxThreads,
 	threadCounter: 0,
 
 	next: function(){
 		if(scanner.ipList.length == 0){
 			setTimeout(function(){
 				process.exit(0);
-			}, 5000);
+			}, config.timeOut);
 		}
 
 		if(scanner.ipList.length > 0 && scanner.threadCounter < scanner.threadMax){
@@ -75,7 +80,7 @@ var scanner = {
 		setTimeout(function(){
 			r.end();
 			scanner.reject();
-		}, 5000);
+		}, config.timeOut);
 	},
 	resolve: function(ip, title){
 		scanner.threadDec();
