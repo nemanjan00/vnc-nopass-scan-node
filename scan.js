@@ -5,12 +5,14 @@ var Image = Canvas.Image;
 
 var PNG = require('pngjs').PNG;
 
+var follow = require('text-file-follower');
 var readline = require('readline');
 var fs = require('fs');
 
 var config = {
 	maxThreads: 10,
-	timeOut: 20000
+	timeOut: 20000,
+	verbose: false
 };
 
 var scanner = {
@@ -25,7 +27,9 @@ var scanner = {
 		}
 
 		if(scanner.ipList.length > 0 && scanner.threadCounter < scanner.threadMax){
-			console.log(scanner.ipList.length);
+			if(config.verbose){
+				console.log(scanner.ipList.length);
+			}
 			scanner.test(scanner.ipList.pop());
 		}
 	},
@@ -38,26 +42,36 @@ var scanner = {
 		scanner.threadCounter--;
 		scanner.next();
 	},
+	
+	onLine: function(line){
+		line = line.split(" ");
+
+		if(line.length > 0){
+			scanner.ipList.push(line[3]);
+		}
+		else {
+			scanner.ipList.push(line[0]);
+		}
+
+		scanner.next();
+	},
 
 	start: function(){
 		var lineReader = readline.createInterface({
 			input: fs.createReadStream('ip.txt')
 		});
 
-		lineReader.on('line', function (line) {
-			line = line.split(" ");
-
-			if(line.length > 0){
-				scanner.ipList.push(line[3]);
-			}
-			else {
-				scanner.ipList.push(line[0]);
-			}
-		});
+		lineReader.on('line', scanner.onLine);
 
 		lineReader.on('close', function(){
-			scanner.next();
+			var follower = follow('ip.txt');
+
+			follower.on('line', function(filename, line) {
+				scanner.onLine(line);
+			});
 		});
+
+
 	},
 	test: function(ip){
 		var status = "init";
@@ -141,7 +155,9 @@ var scanner = {
 		fs.appendFile('output.txt', data.ip+" - "+data.title+"\n", function (err) {});
 	},
 	reject: function(error){
-		console.log(error);
+		if(config.verbose){
+			console.log(error);
+		}
 		scanner.threadDec();
 	}
 }
@@ -149,6 +165,8 @@ var scanner = {
 scanner.start();
 
 process.on('uncaughtException', function (exception) {
-	console.log(exception);
+	if(config.verbose){
+		console.log(exception);
+	}
 });
 

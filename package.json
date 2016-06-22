@@ -11,6 +11,7 @@
   "dependencies": {
     "canvas": "^1.4.0",
     "pngjs": "^2.3.1",
-    "rfb2": "0.0.11"
+    "rfb2": "0.0.11",
+    "text-file-follower": "^0.1.0"
   }
 }
