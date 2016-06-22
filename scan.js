@@ -21,7 +21,7 @@ var scanner = {
 
 	next: function(){
 		if(scanner.ipList.length == 0 && scanner.threadCounter == 0){
-			console.log("Done. Maybe waiting for screenshots... ");
+			console.log("Done. Taking screenshots... ");
 		}
 
 		if(scanner.ipList.length > 0 && scanner.threadCounter < scanner.threadMax){
@@ -75,6 +75,9 @@ var scanner = {
 
 				canvas = canvas = new Canvas(r.width, r.height);
 				ctx = canvas.getContext('2d');
+
+				ctx.fillStyle = "#000";
+				ctx.fillRect(0, 0, r.width, r.height);
 
 				r.requestUpdate(false, 0, 0, r.width, r.height);
 			});
