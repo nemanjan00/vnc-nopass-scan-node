@@ -10,7 +10,7 @@ var fs = require('fs');
 
 var config = {
 	maxThreads: 10,
-	timeOut: 10000
+	timeOut: 20000
 };
 
 var scanner = {
@@ -119,7 +119,7 @@ var scanner = {
 		setTimeout(function(){
 			if(status == "init"){
 				r.end();
-				scanner.reject();
+				scanner.reject("timeout");
 			}
 		}, config.timeOut);
 	},
@@ -137,7 +137,6 @@ var scanner = {
 scanner.start();
 
 process.on('uncaughtException', function (exception) {
-	console.log(exception);
-	scanner.reject();
+	scanner.reject(exception);
 });
 
