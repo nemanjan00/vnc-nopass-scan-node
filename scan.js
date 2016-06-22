@@ -11,7 +11,7 @@ var fs = require('fs');
 
 var config = {
 	maxThreads: 10,
-	timeOut: 20000,
+	timeOut: 10000,
 	verbose: false
 };
 
@@ -90,11 +90,10 @@ var scanner = {
 			});
 
 			r.on('connect', function() {
-				if(status != "valid"){
+				if(status == "init"){
 					status = "valid";
 
 					resolve({ip: ip, title: r.title});
-					scanner.threadDec();
 
 					canvas = canvas = new Canvas(r.width, r.height);
 					ctx = canvas.getContext('2d');
@@ -131,7 +130,7 @@ var scanner = {
 			});
 
 			r.on('error', function(error) {
-				if(status != "error"){
+				if(status == "init"){
 					status = "error";
 
 					reject(error);
@@ -146,6 +145,7 @@ var scanner = {
 			if(status == "init"){
 				r.end();
 				scanner.reject("timeout");
+				status = "timeout";
 			}
 		}, config.timeOut);
 	},
