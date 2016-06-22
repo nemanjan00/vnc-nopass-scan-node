@@ -45,7 +45,14 @@ var scanner = {
 		});
 
 		lineReader.on('line', function (line) {
-			scanner.ipList.push(line);
+			line = line.split(" ");
+
+			if(line.length > 0){
+				scanner.ipList.push(line[3]);
+			}
+			else {
+				scanner.ipList.push(line[0]);
+			}
 		});
 
 		lineReader.on('close', function(){
