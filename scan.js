@@ -9,8 +9,8 @@ var readline = require('readline');
 var fs = require('fs');
 
 var config = {
-	maxThreads: 50,
-	timeOut: 5000
+	maxThreads: 10,
+	timeOut: 10000
 };
 
 var scanner = {
@@ -25,6 +25,7 @@ var scanner = {
 		}
 
 		if(scanner.ipList.length > 0 && scanner.threadCounter < scanner.threadMax){
+			console.log(scanner.ipList.length);
 			scanner.test(scanner.ipList.pop());
 		}
 	},
@@ -52,7 +53,8 @@ var scanner = {
 		});
 	},
 	test: function(ip){
-		var valid = false;
+		var status = "init";
+		var r;
 
 		var p = new Promise(function(resolve, reject) {
 			scanner.threadInc();
@@ -60,14 +62,14 @@ var scanner = {
 			var canvas;
 			var ctx;
 
-			var r = rfb.createConnection({
+			r = rfb.createConnection({
 				host: ip,
 				port: 5900,
 				password: ''
 			});
 
 			r.on('connect', function() {
-				valid = true;
+				status = "valid";
 
 				resolve({ip: ip, title: r.title});
 				scanner.threadDec();
@@ -106,6 +108,8 @@ var scanner = {
 			});
 
 			r.on('error', function(error) {
+				status = "error";
+
 				reject(error);
 			});
 		});
@@ -113,7 +117,8 @@ var scanner = {
 		p.then(scanner.resolve, scanner.reject);
 
 		setTimeout(function(){
-			if(!valid){
+			if(status == "init"){
+				r.end();
 				scanner.reject();
 			}
 		}, config.timeOut);
@@ -123,7 +128,8 @@ var scanner = {
 
 		fs.appendFile('output.txt', data.ip+" - "+data.title+"\n", function (err) {});
 	},
-	reject: function(){
+	reject: function(error){
+		console.log(error);
 		scanner.threadDec();
 	}
 }
@@ -131,6 +137,7 @@ var scanner = {
 scanner.start();
 
 process.on('uncaughtException', function (exception) {
+	console.log(exception);
 	scanner.reject();
 });
 
