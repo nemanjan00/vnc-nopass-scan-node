@@ -69,18 +69,20 @@ var scanner = {
 			});
 
 			r.on('connect', function() {
-				status = "valid";
+				if(status != "valid"){
+					status = "valid";
 
-				resolve({ip: ip, title: r.title});
-				scanner.threadDec();
+					resolve({ip: ip, title: r.title});
+					scanner.threadDec();
 
-				canvas = canvas = new Canvas(r.width, r.height);
-				ctx = canvas.getContext('2d');
+					canvas = canvas = new Canvas(r.width, r.height);
+					ctx = canvas.getContext('2d');
 
-				ctx.fillStyle = "#000";
-				ctx.fillRect(0, 0, r.width, r.height);
+					ctx.fillStyle = "#000";
+					ctx.fillRect(0, 0, r.width, r.height);
 
-				r.requestUpdate(false, 0, 0, r.width, r.height);
+					r.requestUpdate(false, 0, 0, r.width, r.height);
+				}
 			});
 
 			r.on('rect', function(rect) {
@@ -108,9 +110,12 @@ var scanner = {
 			});
 
 			r.on('error', function(error) {
-				status = "error";
+				if(status != "error"){
+					status = "error";
 
-				reject(error);
+					reject(error);
+					r.end();
+				}
 			});
 		});
 
@@ -137,6 +142,6 @@ var scanner = {
 scanner.start();
 
 process.on('uncaughtException', function (exception) {
-	scanner.reject(exception);
+	console.log(exception);
 });
 
