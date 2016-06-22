@@ -52,12 +52,10 @@ var scanner = {
 		});
 	},
 	test: function(ip){
+		var valid = false;
+
 		var p = new Promise(function(resolve, reject) {
 			scanner.threadInc();
-
-			var writers = 0;
-
-			var title;
 
 			var canvas;
 			var ctx;
@@ -69,9 +67,10 @@ var scanner = {
 			});
 
 			r.on('connect', function() {
-				title = r.title;
+				valid = true;
 
-				resolve({ip: ip, title: title});
+				resolve({ip: ip, title: r.title});
+				scanner.threadDec();
 
 				canvas = canvas = new Canvas(r.width, r.height);
 				ctx = canvas.getContext('2d');
@@ -111,20 +110,18 @@ var scanner = {
 			});
 		});
 
-		p.then(function(data){
-			scanner.resolve(data.ip, data.title);
-		}, function(){
-			scanner.reject();
-		});
+		p.then(scanner.resolve, scanner.reject);
 
 		setTimeout(function(){
-			scanner.reject();
+			if(!valid){
+				scanner.reject();
+			}
 		}, config.timeOut);
 	},
-	resolve: function(ip, title){
+	resolve: function(data){
 		scanner.threadDec();
 
-		fs.appendFile('output.txt', ip+" - "+title+"\n", function (err) {});
+		fs.appendFile('output.txt', data.ip+" - "+data.title+"\n", function (err) {});
 	},
 	reject: function(){
 		scanner.threadDec();
@@ -134,7 +131,6 @@ var scanner = {
 scanner.start();
 
 process.on('uncaughtException', function (exception) {
-	console.log(exception);
 	scanner.reject();
 });
 
