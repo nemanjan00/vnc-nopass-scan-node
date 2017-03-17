@@ -46,7 +46,7 @@ var scanner = {
 	onLine: function(line){
 		line = line.split(" ");
 
-		if(line.length > 0){
+		if(line.length > 1){
 			scanner.ipList.push(line[3]);
 		}
 		else {
